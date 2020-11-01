@@ -27,6 +27,7 @@ dependencies:
 - time
 - text
 - mtl
+- attoparsec
 
 ghc-options:
     - -Wall

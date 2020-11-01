@@ -12,8 +12,12 @@ data ApiKeyVis  = Public   | Private
 
 newtype ApiKey (ty :: ApiKeyType) (v :: ApiKeyVis) = ApiKey Text deriving Show via Text
 
-data ParseTimeFmt = ParseTimeFmt {parseTimeFmt :: String, runParseTime :: (String -> (Either String (TimeZone -> UTCTime))) }
 type ParseTime = String -> Either String (TimeZone -> UTCTime)
+type ParseDuration = (ZonedTime -> UTCTime)
+
+data ParseTimeFmt
+  = ParseTimeFmt     {parseTimeFmt :: String, runParseTime :: ParseTime }
+  | ParseDuration    ParseDuration
 
 instance Show ParseTimeFmt where
   show _ = "ParseTime ..."
@@ -41,7 +45,7 @@ data CliDeleteOptions time = CliDeleteOptions
 data CliDeleteSelection time
   = DeleteAllMode
   | FromDateMode time
-  | BeforeDurationMode (DiffTime)
+  | BeforeDurationMode time
   deriving (Functor, Foldable, Traversable)
 
 instance (Show a) => Show (CliDeleteSelection a) where
