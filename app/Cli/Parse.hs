@@ -1,19 +1,13 @@
 module Cli.Parse where
 
-import Data.Time.Clock
+
+import Options
+import Cli.ParseDuration
+
 import Data.Time.Format hiding (ParseTime)
 import Data.Time.LocalTime
 
-import Data.Text
-
-import Control.Monad.Reader
-import Data.Functor.Identity
-
 import Options.Applicative
-import Data.Coerce
-
-import Cli.Options
-import Cli.ParseDuration
 
 parseCliOptions :: Parser (CliOptions ParseTimeFmt)
 parseCliOptions = CliOptions
@@ -39,24 +33,26 @@ parseDeleteOptions = CliDeleteOptions
 deleteModes :: Parser (CliDeleteSelection ParseTimeFmt)
 deleteModes
   =   (flag' DeleteAllMode (long "delete_all" <> help "Delete All Tweets"))
-  <|> ((BeforeDurationMode) <$> option (eitherReader parseBeforeDuration)
-        (long "before_duration"
-         <> metavar "DURATION"
-         <> help "Delete all tweets older than DURATION in the form \"%b months %w weeks %d days %h hours %m minutes\""))
-  <|> (FromDateMode <$> parseParseTimeFmt)
+  <|> parseDurationStr
+  <|> (mkParseTimeFmtMode <$> parseFromDateStr <*> parseTimeFormatStr)
 
-parseParseTimeFmt :: Parser ParseTimeFmt
-parseParseTimeFmt = ParseTimeFmt <$> parseTimeFormatString <*> fromDate
+mkParseTimeFmtMode :: String -> String -> (CliDeleteSelection ParseTimeFmt)
+mkParseTimeFmtMode datestr fmt = FromDateMode datestr (ParseTimeFmt fmt (parseFromDate datestr))
 
-parseTimeFormatString :: Parser String
-parseTimeFormatString = (option str (long "time_format" <> short 'f' <> metavar "FMT" <> value "%Y/%m/%d %H:%M:%S" <> help "Parse input date according to FMT."))
+parseTimeFormatStr :: Parser String
+parseTimeFormatStr = (option str (long "time_format" <> short 'f' <> metavar "FMT" <> value "%Y/%m/%d %H:%M:%S" <> help "Parse input date according to FMT."))
 
-fromDate :: Parser (ParseTime)
-fromDate = parseFromDate
-  <$> option str
+parseFromDateStr :: Parser String
+parseFromDateStr = option str
          (long "before_date"
           <> metavar "DATETIME"
           <> help "Delete all tweets posted before DATETIME, formatted according to FMT, or %Y/%m/%d %H:%M:%S by default.")
+
+parseDurationStr :: Parser (CliDeleteSelection ParseTimeFmt)
+parseDurationStr = option (eitherReader parseBeforeDuration)
+        (long "before_duration"
+         <> metavar "DURATION"
+         <> help "Delete all tweets older than DURATION in the form \"%b months %w weeks %d days %h hours %m minutes\"")
 
 deleteFlags :: Parser CliPromptMode
 deleteFlags
@@ -70,5 +66,5 @@ parseFromDate dateString =  \fmtString ->
     Nothing -> Left $ "Failed to parse string " <> dateString <> " according to format string " <> fmtString
     (Just localtime) -> Right $ \tz -> localTimeToUTC tz localtime
 
-parseBeforeDuration :: String -> Either String ParseTimeFmt
-parseBeforeDuration x = ParseDuration <$> parseDuration x
+parseBeforeDuration :: String -> Either String (CliDeleteSelection ParseTimeFmt)
+parseBeforeDuration x = (\p -> (BeforeDurationMode x (ParseDuration p))) <$> parseDuration x

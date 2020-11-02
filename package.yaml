@@ -24,13 +24,21 @@ dependencies:
 - twitter-conduit
 - optparse-applicative
 - twitter-types
+- twitter-types-lens
 - time
 - text
+- bytestring
 - mtl
+- transformers
 - attoparsec
+- authenticate-oauth
+- lens
+- conduit
+- conduit-extra
 
 ghc-options:
     - -Wall
+    - -Werror
     - -Wcompat
     - -Wincomplete-record-updates
     - -Wincomplete-uni-patterns
@@ -54,7 +62,7 @@ ghc-options:
     - -XRecordWildCards
     - -XDeriveFunctor
     - -XDeriveTraversable
-   
+    - -XOverloadedLabels
 
 library:
   source-dirs: src

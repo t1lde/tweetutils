@@ -1,13 +1,14 @@
 module Cli.ParseDuration where
 
+
+import Options
+
 import Data.Attoparsec.Text
 import Data.Text
 
 import Data.Time.Calendar
 import Data.Time.Clock
 import Data.Time.LocalTime
-
-import Cli.Options
 
 parseDuration :: String -> Either String ParseDuration
 parseDuration str = parseOnly (parseDuration' <* endOfInput) (pack str)
@@ -30,7 +31,7 @@ mkDiffTime years months weeks days hours minutes
   <> (calendarTimeTime $ secondsToNominalDiffTime $ fromInteger $ negate 60 * (60 * hours + minutes))
 
 (|*) :: Integer -> CalendarDiffDays -> CalendarDiffDays
-n |* duration = scaleCalendarDiffDays n duration
+n |* dur = scaleCalendarDiffDays n dur
 infixl 7 |*
 
 duration :: Text -> Parser Integer

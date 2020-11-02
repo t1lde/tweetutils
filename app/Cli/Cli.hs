@@ -1,9 +1,9 @@
 module Cli.Cli
-  ( module Cli.Options
+  ( module Options
   , getOptions
   ) where
 
-import Cli.Options
+import Options
 import Cli.Parse
 
 import Options.Applicative

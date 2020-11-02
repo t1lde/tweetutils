@@ -25,44 +25,61 @@ source-repository head
 
 library
   exposed-modules:
+      ApiOptions
+      Auth
+      Delete
       Lib
+      Options
   other-modules:
       Paths_tweetdelete
   hs-source-dirs:
       src
-  ghc-options: -Wall -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints -XEmptyCase -XInstanceSigs -XLambdaCase -XMultiWayIf -XNamedFieldPuns -XTupleSections -XBangPatterns -XKindSignatures -XTypeOperators -XOverloadedStrings -XScopedTypeVariables -XTypeApplications -XApplicativeDo -XDeriveGeneric -XDataKinds -XDerivingVia -XRecordWildCards -XDeriveFunctor -XDeriveTraversable
+  ghc-options: -Wall -Werror -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints -XEmptyCase -XInstanceSigs -XLambdaCase -XMultiWayIf -XNamedFieldPuns -XTupleSections -XBangPatterns -XKindSignatures -XTypeOperators -XOverloadedStrings -XScopedTypeVariables -XTypeApplications -XApplicativeDo -XDeriveGeneric -XDataKinds -XDerivingVia -XRecordWildCards -XDeriveFunctor -XDeriveTraversable -XOverloadedLabels
   build-depends:
       attoparsec
+    , authenticate-oauth
     , base >=4.7 && <5
+    , bytestring
+    , conduit
+    , conduit-extra
+    , lens
     , mtl
     , optparse-applicative
     , text
     , time
+    , transformers
     , twitter-conduit
     , twitter-types
+    , twitter-types-lens
   default-language: Haskell2010
 
 executable tweetdelete-exe
   main-is: Main.hs
   other-modules:
       Cli.Cli
-      Cli.Options
       Cli.Parse
       Cli.ParseDuration
       Paths_tweetdelete
   hs-source-dirs:
       app
-  ghc-options: -Wall -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints -XEmptyCase -XInstanceSigs -XLambdaCase -XMultiWayIf -XNamedFieldPuns -XTupleSections -XBangPatterns -XKindSignatures -XTypeOperators -XOverloadedStrings -XScopedTypeVariables -XTypeApplications -XApplicativeDo -XDeriveGeneric -XDataKinds -XDerivingVia -XRecordWildCards -XDeriveFunctor -XDeriveTraversable -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -Wall -Werror -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints -XEmptyCase -XInstanceSigs -XLambdaCase -XMultiWayIf -XNamedFieldPuns -XTupleSections -XBangPatterns -XKindSignatures -XTypeOperators -XOverloadedStrings -XScopedTypeVariables -XTypeApplications -XApplicativeDo -XDeriveGeneric -XDataKinds -XDerivingVia -XRecordWildCards -XDeriveFunctor -XDeriveTraversable -XOverloadedLabels -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       attoparsec
+    , authenticate-oauth
     , base >=4.7 && <5
+    , bytestring
+    , conduit
+    , conduit-extra
+    , lens
     , mtl
     , optparse-applicative
     , text
     , time
+    , transformers
     , tweetdelete
     , twitter-conduit
     , twitter-types
+    , twitter-types-lens
   default-language: Haskell2010
 
 test-suite tweetdelete-test
@@ -72,15 +89,22 @@ test-suite tweetdelete-test
       Paths_tweetdelete
   hs-source-dirs:
       test
-  ghc-options: -Wall -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints -XEmptyCase -XInstanceSigs -XLambdaCase -XMultiWayIf -XNamedFieldPuns -XTupleSections -XBangPatterns -XKindSignatures -XTypeOperators -XOverloadedStrings -XScopedTypeVariables -XTypeApplications -XApplicativeDo -XDeriveGeneric -XDataKinds -XDerivingVia -XRecordWildCards -XDeriveFunctor -XDeriveTraversable -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -Wall -Werror -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints -XEmptyCase -XInstanceSigs -XLambdaCase -XMultiWayIf -XNamedFieldPuns -XTupleSections -XBangPatterns -XKindSignatures -XTypeOperators -XOverloadedStrings -XScopedTypeVariables -XTypeApplications -XApplicativeDo -XDeriveGeneric -XDataKinds -XDerivingVia -XRecordWildCards -XDeriveFunctor -XDeriveTraversable -XOverloadedLabels -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       attoparsec
+    , authenticate-oauth
     , base >=4.7 && <5
+    , bytestring
+    , conduit
+    , conduit-extra
+    , lens
     , mtl
     , optparse-applicative
     , text
     , time
+    , transformers
     , tweetdelete
     , twitter-conduit
     , twitter-types
+    , twitter-types-lens
   default-language: Haskell2010

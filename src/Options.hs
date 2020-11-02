@@ -1,16 +1,16 @@
-module Cli.Options where
+module Options where
 
-import Data.Traversable
+import Data.Traversable()
 
 import Data.Time.Clock
 import Data.Time.LocalTime
 
-import Data.Text
+import Data.ByteString
 
 data ApiKeyType = Consumer | Access
 data ApiKeyVis  = Public   | Private
 
-newtype ApiKey (ty :: ApiKeyType) (v :: ApiKeyVis) = ApiKey Text deriving Show via Text
+newtype ApiKey (ty :: ApiKeyType) (v :: ApiKeyVis) = ApiKey ByteString deriving Show via ByteString
 
 type ParseTime = String -> Either String (TimeZone -> UTCTime)
 type ParseDuration = (ZonedTime -> UTCTime)
@@ -44,14 +44,14 @@ data CliDeleteOptions time = CliDeleteOptions
 
 data CliDeleteSelection time
   = DeleteAllMode
-  | FromDateMode time
-  | BeforeDurationMode time
+  | FromDateMode String time
+  | BeforeDurationMode String time
   deriving (Functor, Foldable, Traversable)
 
 instance (Show a) => Show (CliDeleteSelection a) where
   show DeleteAllMode = "DeleteAllMode"
-  show (FromDateMode x)  = "FromDateMode " <> show x
-  show (BeforeDurationMode x) = "BeforeDurationMode " <> show x
+  show (FromDateMode _ time)  = "FromDateMode " <> show time
+  show (BeforeDurationMode _ time) = "BeforeDurationMode " <> show time
 
 data CliPromptMode
   = CliConfirm
