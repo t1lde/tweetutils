@@ -1,23 +1,19 @@
 name:                tweetdelete
 version:             0.1.0.0
-github:              "githubuser/tweetdelete"
 license:             BSD3
-author:              "Author name here"
-maintainer:          "example@example.com"
-copyright:           "2020 Author name here"
+author:              "Tilde Rose"
+maintainer:          "t1lde@protonmail.com"
+copyright:           "2020 Tilde Rose"
 
 extra-source-files:
 - README.md
 - ChangeLog.md
 
 # Metadata used when publishing your package
-# synopsis:            Short description of your package
-# category:            Web
+synopsis:            Delete tweets from the commandline using the Twitter API (via twitter-conduit)
+category:            Web
 
-# To avoid duplicated efforts in documentation and dealing with the
-# complications of embedding Haddock markup inside cabal files, it is
-# common to point users to the README.md file.
-description:         Please see the README on GitHub at <https://github.com/githubuser/tweetdelete#readme>
+description:         Please see the README on GitLab at <https://gitlab.com/t1lde/tweetdelete_hs#readme>
 
 dependencies:
 - base >= 4.7 && < 5
@@ -37,6 +33,7 @@ dependencies:
 - conduit-extra
 
 ghc-options:
+    - -O2
     - -Wall
     - -Werror
     - -Wcompat

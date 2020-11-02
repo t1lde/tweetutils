@@ -6,22 +6,18 @@ cabal-version: 1.12
 
 name:           tweetdelete
 version:        0.1.0.0
-description:    Please see the README on GitHub at <https://github.com/githubuser/tweetdelete#readme>
-homepage:       https://github.com/githubuser/tweetdelete#readme
-bug-reports:    https://github.com/githubuser/tweetdelete/issues
-author:         Author name here
-maintainer:     example@example.com
-copyright:      2020 Author name here
+synopsis:       Delete tweets from the commandline using the Twitter API (via twitter-conduit)
+description:    Please see the README on GitLab at <https://gitlab.com/t1lde/tweetdelete_hs#readme>
+category:       Web
+author:         Tilde Rose
+maintainer:     t1lde@protonmail.com
+copyright:      2020 Tilde Rose
 license:        BSD3
 license-file:   LICENSE
 build-type:     Simple
 extra-source-files:
     README.md
     ChangeLog.md
-
-source-repository head
-  type: git
-  location: https://github.com/githubuser/tweetdelete
 
 library
   exposed-modules:
@@ -34,7 +30,7 @@ library
       Paths_tweetdelete
   hs-source-dirs:
       src
-  ghc-options: -Wall -Werror -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints -XEmptyCase -XInstanceSigs -XLambdaCase -XMultiWayIf -XNamedFieldPuns -XTupleSections -XBangPatterns -XKindSignatures -XTypeOperators -XOverloadedStrings -XScopedTypeVariables -XTypeApplications -XApplicativeDo -XDeriveGeneric -XDataKinds -XDerivingVia -XRecordWildCards -XDeriveFunctor -XDeriveTraversable -XOverloadedLabels
+  ghc-options: -O2 -Wall -Werror -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints -XEmptyCase -XInstanceSigs -XLambdaCase -XMultiWayIf -XNamedFieldPuns -XTupleSections -XBangPatterns -XKindSignatures -XTypeOperators -XOverloadedStrings -XScopedTypeVariables -XTypeApplications -XApplicativeDo -XDeriveGeneric -XDataKinds -XDerivingVia -XRecordWildCards -XDeriveFunctor -XDeriveTraversable -XOverloadedLabels
   build-depends:
       attoparsec
     , authenticate-oauth
@@ -62,7 +58,7 @@ executable tweetdelete-exe
       Paths_tweetdelete
   hs-source-dirs:
       app
-  ghc-options: -Wall -Werror -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints -XEmptyCase -XInstanceSigs -XLambdaCase -XMultiWayIf -XNamedFieldPuns -XTupleSections -XBangPatterns -XKindSignatures -XTypeOperators -XOverloadedStrings -XScopedTypeVariables -XTypeApplications -XApplicativeDo -XDeriveGeneric -XDataKinds -XDerivingVia -XRecordWildCards -XDeriveFunctor -XDeriveTraversable -XOverloadedLabels -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -O2 -Wall -Werror -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints -XEmptyCase -XInstanceSigs -XLambdaCase -XMultiWayIf -XNamedFieldPuns -XTupleSections -XBangPatterns -XKindSignatures -XTypeOperators -XOverloadedStrings -XScopedTypeVariables -XTypeApplications -XApplicativeDo -XDeriveGeneric -XDataKinds -XDerivingVia -XRecordWildCards -XDeriveFunctor -XDeriveTraversable -XOverloadedLabels -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       attoparsec
     , authenticate-oauth
@@ -89,7 +85,7 @@ test-suite tweetdelete-test
       Paths_tweetdelete
   hs-source-dirs:
       test
-  ghc-options: -Wall -Werror -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints -XEmptyCase -XInstanceSigs -XLambdaCase -XMultiWayIf -XNamedFieldPuns -XTupleSections -XBangPatterns -XKindSignatures -XTypeOperators -XOverloadedStrings -XScopedTypeVariables -XTypeApplications -XApplicativeDo -XDeriveGeneric -XDataKinds -XDerivingVia -XRecordWildCards -XDeriveFunctor -XDeriveTraversable -XOverloadedLabels -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -O2 -Wall -Werror -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints -XEmptyCase -XInstanceSigs -XLambdaCase -XMultiWayIf -XNamedFieldPuns -XTupleSections -XBangPatterns -XKindSignatures -XTypeOperators -XOverloadedStrings -XScopedTypeVariables -XTypeApplications -XApplicativeDo -XDeriveGeneric -XDataKinds -XDerivingVia -XRecordWildCards -XDeriveFunctor -XDeriveTraversable -XOverloadedLabels -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       attoparsec
     , authenticate-oauth
