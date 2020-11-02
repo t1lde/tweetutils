@@ -1,4 +1,4 @@
-module Delete (apiDelete) where
+module Delete (apiDelete)  where
 
 import Control.Lens
 
@@ -6,9 +6,10 @@ import Web.Twitter.Conduit
 import Web.Twitter.Types.Lens hiding (user)
 import Data.Conduit
 import qualified Data.Conduit.List as CL
+import Control.Concurrent.ParallelIO
 
 import Data.Time.Clock
-import Data.Text hiding (length, minimum)
+import Data.Text hiding (length, minimum, null)
 import qualified Data.Text.IO as T
 
 import System.IO (hFlush, stdout)
@@ -29,20 +30,52 @@ apiDelete info mgr opts = do
     .| CL.filter ((^.statusCreatedAt) >>> (deleteFilter opts))
     .| CL.consume
   putStrLn $ showQuerySummary tweets
-  promptCont (cliPromptMode opts) $ mapM_ (deleteTweet info mgr) tweets
+  likes <- queryLikes info mgr opts user
+  unless (null tweets && null likes) $ promptCont (cliPromptMode opts) $ (deleteTweets tweets >> (deleteLikes likes))
+  where
+    deleteTweets :: [Status] -> IO ()
+    deleteTweets tweets = parallel_ $ fmap (deleteTweet info mgr) tweets
+
+    deleteLikes :: [Status] -> IO ()
+    deleteLikes likes = parallel_ $ fmap (deleteLike info mgr) likes
+
+queryLikes :: TWInfo -> Manager -> CliDeleteOptions UTCTime -> User -> IO [Status]
+queryLikes info mgr opts user | cliDeleteLikes opts == CliDeleteLikes = do
+  putStrLn "Querying Likes..."
+  likes <- runConduit $ sourceWithMaxId info mgr (favoritesList (pure $ UserIdParam $ user^.userId ) & #count ?~ 200)
+    .| CL.filter ((^.statusCreatedAt) >>> (deleteFilter opts))
+    .| CL.consume
+  putStrLn $ showQueryLikesSummary likes
+  return likes
+queryLikes _ _ _ _ | otherwise = return $ mempty
 
 deleteTweet :: TWInfo -> Manager -> Status -> IO ()
 deleteTweet info mgr tweet = do
   tweet' <- call info mgr $ statusesDestroyId (tweet ^. statusId)
   putStrLn $ "Successfully deleted tweet "<>(show $ tweet' ^. statusId)
 
+deleteLike :: TWInfo -> Manager -> Status -> IO ()
+deleteLike info mgr tweet = do
+  tweet' <- call info mgr $ favoritesDestroy (tweet ^. statusId)
+  putStrLn $ "Successfully deleted like on tweet "<>(show $ tweet'^.statusId)
+
 showQuerySummary :: [Status] -> String
+showQuerySummary [] = "No tweets found."
 showQuerySummary tweets =
   "Found " <> (show $ length tweets) <> " tweets, oldest is "
   <> (show $ oldest^.statusId) <>" created at "<> (show $ oldest^.statusCreatedAt)
   where
     oldest :: Status
     oldest = minimumBy (compare `on` (^.statusCreatedAt)) tweets
+
+showQueryLikesSummary :: [Status] -> String
+showQueryLikesSummary [] = "No liked tweets found."
+showQueryLikesSummary likes =
+  "Found " <> (show $ length likes) <> " liked tweets, oldest is "
+  <> (show $ oldest^.statusId) <>" created at "<> (show $ oldest^.statusCreatedAt)
+  where
+    oldest :: Status
+    oldest = minimumBy (compare `on` (^.statusCreatedAt)) likes
 
 promptCont :: CliPromptMode -> IO () -> IO ()
 promptCont CliConfirm cont = do

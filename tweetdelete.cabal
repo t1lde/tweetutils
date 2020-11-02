@@ -41,6 +41,7 @@ library
     , lens
     , mtl
     , optparse-applicative
+    , parallel-io
     , text
     , time
     , transformers
@@ -69,6 +70,7 @@ executable tweetdelete-exe
     , lens
     , mtl
     , optparse-applicative
+    , parallel-io
     , text
     , time
     , transformers
@@ -96,6 +98,7 @@ test-suite tweetdelete-test
     , lens
     , mtl
     , optparse-applicative
+    , parallel-io
     , text
     , time
     , transformers

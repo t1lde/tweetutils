@@ -16,7 +16,8 @@ runWithOptions opts@(CliOptions _ _ mode) = do
   where
     apiMode :: TWInfo -> Manager -> CliModeOptions UTCTime -> IO ()
     apiMode (TWInfo (TWToken oauth _) _) mgr (CliAuthMode) = apiAuth oauth mgr
-    apiMode info mgr (CliDeleteMode deleteOpts) = apiDelete info mgr deleteOpts
+    apiMode info mgr (CliDeleteMode deleteOpts) = do
+      apiDelete info mgr deleteOpts
 
 proxySettings :: TWInfo
 proxySettings = def

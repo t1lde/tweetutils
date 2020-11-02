@@ -39,6 +39,7 @@ data CliDeleteOptions time = CliDeleteOptions
   , cliAccessPublic  :: ApiKey 'Access 'Public
   , cliDeleteMode    :: (CliDeleteSelection time)
   , cliPromptMode    :: CliPromptMode
+  , cliDeleteLikes   :: CliDeleteLikes
   }
   deriving (Show, Functor, Foldable, Traversable)
 
@@ -57,4 +58,9 @@ data CliPromptMode
   = CliConfirm
   | CliForce
   | CliDryRun
+  deriving (Show, Eq)
+
+data CliDeleteLikes
+  = CliDeleteLikes
+  | CliNoDeleteLikes
   deriving (Show, Eq)

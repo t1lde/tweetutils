@@ -46,12 +46,16 @@ The --before_duration, --before_data and --delete_all flags allow you to specify
 
 The --force, --dry and --prompt flags set the prompt mode, allowing tweets to be deleted with/without prompt or not at all.
 
+By default, your likes on tweets older than the query will also be deleted, this can be changed with the --no_likes flag.
+**Note:** Currently, the likes will be queried based on the *liked tweet's* post time, rather than the time that the authenticated used liked the tweet. As far as I know, the twitter API doesn't provide information about *when* a tweet was liked...
+
 ``` 
 Usage: tweetdelete-exe delete --access_private ACCESS_PRIVATE
                               --access_public ACCESS_PUBLIC
                               (--delete_all | --before_duration DURATION |
                                 --before_date DATETIME [-f|--time_format FMT])
                               [(-d|--dry) | (-f|--force) | (-p|--prompt)]
+                              [--no_likes | --delete_likes]
   Delete tweets
 
 Available options:
@@ -71,6 +75,9 @@ Available options:
   -f,--force               Delete tweets without prompting for confirmation
   -p,--prompt              Prompt for confirmation before deleting tweets
                            (default, this flag can be ommitted)
+  --no_likes               Don't delete likes
+  --delete_likes           Delete likes as well as tweets (default, this flag
+                           can be ommitted)
   -h,--help                Show this help text
 ```
 

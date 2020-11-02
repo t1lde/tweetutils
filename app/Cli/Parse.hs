@@ -29,6 +29,7 @@ parseDeleteOptions = CliDeleteOptions
   <*> (ApiKey @'Access @'Public  <$> option str (long "access_public" <> metavar "ACCESS_PUBLIC" <> help "Account Access API Public Key"))
   <*> deleteModes
   <*> deleteFlags
+  <*> deleteLikesFlags
 
 deleteModes :: Parser (CliDeleteSelection ParseTimeFmt)
 deleteModes
@@ -68,3 +69,8 @@ parseFromDate dateString =  \fmtString ->
 
 parseBeforeDuration :: String -> Either String (CliDeleteSelection ParseTimeFmt)
 parseBeforeDuration x = (\p -> (BeforeDurationMode x (ParseDuration p))) <$> parseDuration x
+
+deleteLikesFlags :: Parser CliDeleteLikes
+deleteLikesFlags
+  =   (flag' CliNoDeleteLikes (long "no_likes" <> help "Don't delete likes"))
+  <|> (flag CliDeleteLikes CliDeleteLikes (long "delete_likes" <> help "Delete likes as well as tweets (default, this flag can be ommitted)"))
