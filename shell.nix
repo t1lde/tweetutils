@@ -7,7 +7,7 @@ let
     haskellPackages_ = haskellPackages.override {
         overrides = self: super: {
                    twitter-conduit = dontCheck (super.twitter-conduit);
-                   aeson = overrideAttrs (oldAttrs: rec {
+                   aeson = super.aeson.overrideAttrs (oldAttrs: rec {
                        configureFlags = [
                            "-ffast"
                        ];
