@@ -16,5 +16,10 @@ pkgs.haskell.lib.buildStackProject {
         haskellPackages_.twitter-conduit
         haskellPackages_.twitter-types
         haskellPackages_.twitter-types-lens
+        pkgs.gmp
+        pkgs.libffi
+        pkgs.zlib
+        haskellPackages_.aeson
     ];
+    inherit ghc;
 }
