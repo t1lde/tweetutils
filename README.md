@@ -3,6 +3,10 @@
 Haskell version of [tweet delete cli](https://gitlab.com/t1lde/tweet_delete_cli).
 Delete tweets from the commandline, using the twitter API (requires a twitter API account).
 
+# Mirror Note:
+
+I primarily use Gitlab for actual development use - this repository is a mirror of the main https://gitlab.com/t1lde/tweetdelete_hs repository.
+
 ## Usage:
 
 All commands require a twitter API consumer keypair, set with the --consumer_private and --consumer_public flags.
