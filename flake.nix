@@ -4,15 +4,16 @@
   inputs.nixpkgs.follows = "haskellNix/nixpkgs-unstable";
   inputs.flake-utils.url = "github:numtide/flake-utils";
   outputs = { self, nixpkgs, flake-utils, haskellNix }:
-    flake-utils.lib.eachSystem [ "x86_64-linux" "x86_64-darwin" ] (system:
+    flake-utils.lib.eachSystem [ "x86_64-linux" ] (system:
     let
-      overlays = [ haskellNix.overlay
+      overlays =
+        [ haskellNix.overlay
         (final: prev: {
           # This overlay adds our project to pkgs
           tweetdelete =
             final.haskell-nix.project' {
               src = ./.;
-              #compiler-nix-name = "ghc8107";
+              compiler-nix-name = "ghc8107";
               shell = {
                 tools = {
                   cabal = {};
@@ -25,8 +26,40 @@
         })
       ];
       pkgs = import nixpkgs { inherit system overlays; };
-      flake = pkgs.ipld-brainz.flake { };
-    in flake // {
+      flake = pkgs.tweetdelete.flake { };
+    in flake // rec {
       defaultPackage = flake.packages."tweetdelete:exe:tweetdelete-exe";
+      nixosModules.tweetdelete = {
+        imports = [./module.nix ];
+        nixpkgs.overlays = overlays;
+      };
+      nixosConfigurations.testContainer = nixpkgs.lib.nixosSystem {
+        inherit system;
+        modules = [
+          self.nixosModules.${system}.tweetdelete
+          {
+            services.tweetdelete =
+              {
+                enable = true;
+
+                accounts =
+                  { alice =
+                      {
+                        deleteAll = true;
+                        deleteLikes = false;
+                      };
+                    bob =
+                      {
+                        deleteBefore = "1 week";
+                        deleteLikes = true;
+                      };
+                  };
+
+              };
+          }
+        ];
+
+
+      };
     });
 }
