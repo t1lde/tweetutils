@@ -1,10 +1,10 @@
 {
-  description = "tweetdump";
+  description = "tweetutils";
 
   inputs.haskell-nix.url = "github:input-output-hk/haskell.nix";
   inputs.nixpkgs.follows = "haskell-nix/nixpkgs";
 
-  outputs = inputs@{ self, nixpkgs, haskell-nix, haskell-nix, ... }:
+  outputs = inputs@{ self, nixpkgs, haskell-nix, ... }:
     let
       supportedSystems = with nixpkgs.lib.systems.supported; tier1 ++ tier2 ++ tier3;
 
@@ -30,7 +30,6 @@
           ##     ];
           ##   }
           ## ];
-          modules = [ (plutarch.haskellModule system) ];
           shell = {
             withHoogle = true;
 
