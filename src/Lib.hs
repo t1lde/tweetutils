@@ -5,7 +5,7 @@ import Data.Time.Clock
 
 import Options
 import ApiOptions
-import Delete
+import Query 
 import Auth
 
 runWithOptions :: CliOptions UTCTime -> IO ()
@@ -16,8 +16,8 @@ runWithOptions opts@(CliOptions _ _ mode) = do
   where
     apiMode :: TWInfo -> Manager -> CliModeOptions UTCTime -> IO ()
     apiMode (TWInfo (TWToken oauth _) _) mgr (CliAuthMode) = apiAuth oauth mgr
-    apiMode info mgr (CliDeleteMode deleteOpts) = do
-      apiDelete info mgr deleteOpts
+    apiMode info mgr (CliDeleteMode _deleteOpts) = do
+      apiDelete info mgr --deleteOpts
 
 proxySettings :: TWInfo
 proxySettings = def
