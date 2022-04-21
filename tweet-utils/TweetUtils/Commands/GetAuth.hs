@@ -1,4 +1,4 @@
-module Auth (apiAuth) where
+module TweetUtils.Commands.GetAuth (apiAuth) where
 
 import Web.Twitter.Conduit
 import qualified Web.Authenticate.OAuth as OA

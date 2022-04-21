@@ -1,4 +1,4 @@
-module Image (Image (..), fetchImage) where
+module TweetUtils.Image (Image (..), fetchImage) where
 
 import Data.ByteString.Lazy qualified as Lazy
 import Data.Binary.Builder qualified as Builder
@@ -10,7 +10,7 @@ import Web.Twitter.Conduit.Response
 import Data.Aeson qualified as Aeson
 import Data.Text qualified as T
 import Web.Twitter.Conduit.Request (APIRequest (..))
-import Render (ImageInfo (..))
+import TweetUtils.Render (ImageInfo (..))
 
 newtype Image = Image { imgBytes :: Lazy.ByteString }
 

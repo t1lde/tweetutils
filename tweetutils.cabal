@@ -43,7 +43,12 @@ common lang
     DeriveTraversable 
     OverloadedLabels 
     FlexibleContexts
+    FlexibleInstances
+    MultiParamTypeClasses
+    UndecidableInstances
     ImportQualifiedPost
+    AllowAmbiguousTypes
+    UndecidableSuperClasses
 
 common deps
   build-depends:
@@ -71,19 +76,21 @@ common deps
     , aeson
     , data-default
     , directory
+    , filepath
 
 library
   import: lang, deps
   exposed-modules:
-      ApiOptions
-      Auth
-      Query
-      Lib
-      Render
-      Options
-      Image
+    TweetUtils.Commands.DeleteTweets
+    TweetUtils.Commands.DumpTweets
+    TweetUtils.Commands.GetAuth
+    TweetUtils.MonadApp
+    TweetUtils.Image
+    TweetUtils.Options
+    TweetUtils.Query
+    TweetUtils.Render
   hs-source-dirs:
-      src
+      tweet-utils
 
 executable tweetutils-exe
   import: lang, deps

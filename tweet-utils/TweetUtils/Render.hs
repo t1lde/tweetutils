@@ -1,7 +1,7 @@
-module Render 
+module TweetUtils.Render
   (renderTweet, renderTweets, RenderConfig (..)
-  , defaultRenderConfig, RenderOutputs (..), AppT (..)
-  , runAppT, processAppT, ImageInfo (..), imageInfoUrl, imageName
+  , defaultRenderConfig, RenderOutputs (..), RenderT (..)
+  , runRenderT, processRenderT, ImageInfo (..), imageInfoUrl, imageName
   ) where
 
 import Web.Twitter.Types.Lens
@@ -84,8 +84,8 @@ type MonadRender m =
   , MonadWriter RenderOutputs m
   ) 
 
-newtype AppT m a = 
-  AppT { unAppT :: RWST RenderConfig RenderOutputs () m a}
+newtype RenderT m a =
+  RenderT { unRenderT :: RWST RenderConfig RenderOutputs () m a}
   deriving newtype
     ( Functor
     , Applicative
@@ -95,14 +95,14 @@ newtype AppT m a =
     , MonadWriter RenderOutputs 
     ) 
 
-runAppT :: (Monad m) => AppT m a -> RenderConfig -> m (a, RenderOutputs)
-runAppT (AppT app) cfg =
-  evalRWST app cfg () 
+runRenderT :: (Monad m) => RenderT m a -> RenderConfig -> m (a, RenderOutputs)
+runRenderT (RenderT app) cfg =
+  evalRWST app cfg ()
 
-processAppT :: (Monad m) => 
-  AppT m a -> RenderConfig -> (RenderOutputs -> m ()) -> m a
-processAppT app cfg f = do 
-  (r, outs) <- runAppT app cfg
+processRenderT :: (Monad m) =>
+  RenderT m a -> RenderConfig -> (RenderOutputs -> m ()) -> m a
+processRenderT app cfg f = do
+  (r, outs) <- runRenderT app cfg
   f outs *> pure r 
 
 defaultRenderConfig :: (MonadIO m) => m RenderConfig 
