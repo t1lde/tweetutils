@@ -1,63 +1,63 @@
 module Cli.Parse where
 
-import Data.Char qualified as Char
 import Control.Applicative (Alternative (..))
+import Data.Char           qualified as Char
 
-import TweetUtils.Options
-  (AppOptions (..), AppMode (..), DumpTweetOpts (..), FormatType (..), LogLevel (..), ApiKey (..))
+import TweetUtils.Options (ApiKey (..), AppMode (..), AppOptions (..), DumpTweetOpts (..),
+                           FormatType (..), LogLevel (..))
 
-import Options.Applicative
-  (Parser, CommandFields, Mod, ReadM,
-   option, str, long, metavar, help, hsubparser, command, info, progDesc, flag, flag', short, action, completeWith)
+import Options.Applicative (CommandFields, Mod, Parser, ReadM, action, command, completeWith, flag,
+                            flag', help, hsubparser, info, long, metavar, option, progDesc, short,
+                            str)
 
-parseCliOptions :: Parser AppOptions
+parseCliOptions ∷ Parser AppOptions
 parseCliOptions =
   AppOptions <$>
-    ((Just . ApiKey <$> (option str (long "consumer_private" <> metavar "CONSUMER_PRIVATE" <> help "API Consumer Private Key")))
-        <|> (Just . ApiKeyFile <$> (option str (long "consumer_private_file" <> metavar "path" <> help "API Consumer Private Key (file)" <> action "file")))
-        <|> (pure Nothing)
+    (Just . ApiKey <$> (option str (long "consumer_private" <> metavar "CONSUMER_PRIVATE" <> help "API Consumer Private Key"))
+        <|> Just . ApiKeyFile <$> (option str (long "consumer_private_file" <> metavar "path" <> help "API Consumer Private Key (file)" <> action "file"))
+        <|> pure Nothing
     ) <*>
-    ((Just . ApiKey <$> (option str (long "consumer_public" <> metavar "CONSUMER_PUBLIC" <> help "API Consumer Public Key")))
-        <|> (Just . ApiKeyFile <$> (option str (long "consumer_public_file" <> metavar "path" <> help "API Consumer Public Key (file)" <> action "file")))
-        <|> (pure Nothing)
+    (Just . ApiKey <$> (option str (long "consumer_public" <> metavar "CONSUMER_PUBLIC" <> help "API Consumer Public Key"))
+        <|> Just . ApiKeyFile <$> (option str (long "consumer_public_file" <> metavar "path" <> help "API Consumer Public Key (file)" <> action "file"))
+        <|> pure Nothing
     ) <*>
-    ((flag' Quiet (long "quiet" <> short 'q' <> help "don't print log messages")) <|>
-      (flag Normal Debug (long "verbose" <> short 'v' <> help "print more log messages"))
+    (flag' Quiet (long "quiet" <> short 'q' <> help "don't print log messages") <|>
+      flag Normal Debug (long "verbose" <> short 'v' <> help "print more log messages")
     ) <*>
     hsubparser (authCommand <> dumpTweetsCommand)
 
-authCommand :: Mod CommandFields AppMode
+authCommand ∷ Mod CommandFields AppMode
 authCommand = command "auth" (info (pure Auth) (progDesc "Acquire access keypair via oauth pin."))
 
 --
-dumpTweetsCommand :: Mod CommandFields AppMode
+dumpTweetsCommand ∷ Mod CommandFields AppMode
 dumpTweetsCommand = command "dump-tweets" (info (DumpTweets <$> dumpTweetsOptions) (progDesc "Dump tweets & interactions to file"))
 
 
-dumpTweetsOptions :: Parser DumpTweetOpts
+dumpTweetsOptions ∷ Parser DumpTweetOpts
 dumpTweetsOptions =
   DumpTweetOpts <$>
-    ((Just . ApiKey <$> (option str (long "access_private" <> metavar "ACCESS_PRIVATE" <> help "Account Access Private Key")))
-        <|> (Just . ApiKeyFile <$> (option str (long "access_private_file" <> metavar "path" <> help "Account Access Private Key (file)" <> action "file")))
-        <|> (pure Nothing)
+    (Just . ApiKey <$> (option str (long "access_private" <> metavar "ACCESS_PRIVATE" <> help "Account Access Private Key"))
+        <|> Just . ApiKeyFile <$> (option str (long "access_private_file" <> metavar "path" <> help "Account Access Private Key (file)" <> action "file"))
+        <|> pure Nothing
     ) <*>
-    ((Just . ApiKey <$> (option str (long "access_public" <> metavar "ACCESS_PUBLIC" <> help "Account Access Public Key")))
-        <|> (Just . ApiKeyFile <$> (option str (long "access_public_file" <> metavar "path" <> help "Account Access Public Key (file)" <> action "file")))
-        <|> (pure Nothing)
+    (Just . ApiKey <$> (option str (long "access_public" <> metavar "ACCESS_PUBLIC" <> help "Account Access Public Key"))
+        <|> Just . ApiKeyFile <$> (option str (long "access_public_file" <> metavar "path" <> help "Account Access Public Key (file)" <> action "file"))
+        <|> pure Nothing
     ) <*>
-    (option str (long "out_dir" <> metavar "path" <> help "output directory" <> action "directory")) <*>
-    (option formatType (long "format" <> metavar "<markdown | html | org>" <> help "output file render format" <> completeWith ["markdown", "html", "org"])) <*>
-    ( (flag' True (long "download_media" <> help "download embedded media files"))
-        <|>  (flag True False (long "no_download_media" <> help "don't download embedded media files"))
+    option str (long "out_dir" <> metavar "path" <> help "output directory" <> action "directory") <*>
+    option formatType (long "format" <> metavar "<markdown | html | org>" <> help "output file render format" <> completeWith ["markdown", "html", "org"]) <*>
+    ( flag' True (long "download_media" <> help "download embedded media files")
+        <|>  flag True False (long "no_download_media" <> help "don't download embedded media files")
     )
 
-formatType :: ReadM FormatType
+formatType ∷ ReadM FormatType
 formatType =
-  (fmap (fmap Char.toLower) $ str @String) >>= \case
+  fmap (fmap Char.toLower) (str @String) >>= \case
     "markdown" -> pure Markdown
-    "html" -> pure Html
-    "org" -> pure Org
-    _ -> fail "must be one of <markdown | html | org>"
+    "html"     -> pure Html
+    "org"      -> pure Org
+    _          -> fail "must be one of <markdown | html | org>"
 --
 --parseDeleteOptions :: Parser (CliDeleteOptions ParseTimeFmt)
 --parseDeleteOptions = CliDeleteOptions

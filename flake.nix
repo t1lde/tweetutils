@@ -18,18 +18,16 @@
 
       ghcVersion = "ghc8107";
 
-      tools = {};
-
-      completionsFor = system: nixpkgs.lib.genAttrs ["fish" "bash" "zsh"] (shell:
+      completionsFor = system: nixpkgs.lib.genAttrs [ "fish" "bash" "zsh" ] (shell:
         let
           pkgs = nixpkgsFor' system;
         in
-          pkgs.callPackage ./completions.nix {
-            inherit shell;
-            name = "completions.${shell}";
-            appExe = projectApp;
-            app = self.flake.${system}.packages."${project}:exe:${projectApp}";
-          }
+        pkgs.callPackage ./completions.nix {
+          inherit shell;
+          name = "completions.${shell}";
+          appExe = projectApp;
+          app = self.flake.${system}.packages."${project}:exe:${projectApp}";
+        }
 
       );
 
@@ -39,24 +37,15 @@
         (nixpkgsFor system).haskell-nix.cabalProject' {
           src = ./.;
           compiler-nix-name = ghcVersion;
-          ## extraSources = [
-          ##   {
-          ##     src = inputs.etc;
-          ##     subdirs = [
-          ##     ];
-          ##   }
-          ## ];
           shell = {
             withHoogle = true;
-
             exactDeps = true;
-
-            # We use the ones from Nixpkgs, since they are cached reliably.
-            # Eventually we will probably want to build these with haskell.nix.
-            nativeBuildInputs = [];
-
-            inherit tools;
-
+            nativeBuildInputs = with pkgs'.haskellPackages; [
+              apply-refact
+              cabal-fmt
+              hlint
+              stylish-haskell
+            ];
             additional = ps: [
             ];
           };
@@ -69,5 +58,7 @@
       packages = perSystem (system: self.flake.${system}.packages // { completions = completionsFor system; });
       devShell = perSystem (system: self.flake.${system}.devShell);
       defaultApp = perSystem (system: self.flake.${system}.packages."${project}:exe:${projectApp}");
+      defaultPackage = perSystem (system: self.flake.${system}.packages."${project}:exe:${projectApp}");
+      formatter = perSystem (system: nixpkgs.legacyPackages.${system}.nixpkgs-fmt);
     };
 }

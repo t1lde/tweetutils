@@ -1,59 +1,48 @@
 module TweetUtils.Commands.DumpTweets
-  ( apiDumpTweets
-  , type DumpTweetInfo
-  , FormatType (..)
-  ) where
+    ( FormatType (..)
+    , apiDumpTweets
+    , type DumpTweetInfo
+    ) where
 
 --------------------------------------------------------------------------------
 
 import Control.Arrow
 import Control.Monad
-import Data.Foldable (for_)
 import Control.Monad.IO.Class (liftIO)
-import GHC.Generics qualified as GHC
+import Data.Foldable          (for_)
+import GHC.Generics           qualified as GHC
 
 --------------------------------------------------------------------------------
 
-import System.Directory (doesFileExist, createDirectoryIfMissing)
+import Control.Lens          hiding (children)
+import Control.Monad.Extra   (whenM)
+import Data.ByteString.Lazy  qualified as LBS
+import Data.Default          (Default (def))
+import Data.Map              qualified as M
+import Data.Text             qualified as T
+import Data.Text.IO          qualified as T
+import Options.Generic       (ParseField (..), ParseFields (..), ParseRecord (..))
+import System.Directory      (createDirectoryIfMissing, doesFileExist)
 import System.FilePath.Posix ((</>))
-import Data.ByteString.Lazy qualified as LBS
-import Control.Lens hiding (children)
-import qualified Data.Map as M
-import Data.Text qualified as T
-import qualified Data.Text.IO as T
-import Control.Monad.Extra (whenM)
-import Data.Default (Default (def))
-import Options.Generic
-  ( ParseRecord (..)
-  , ParseField (..)
-  , ParseFields (..)
-  --, parseRecordWithModifiers
-  --, lispCaseModifiers
-  --, parseField
-  )
 
 --------------------------------------------------------------------------------
 
-import Conduit ()
-import Web.Twitter.Types.Lens
-  (searchResultStatuses, User
-  )
-import Text.Pandoc.Writers qualified as Pandoc
-import Text.Pandoc.Class qualified as Pandoc
+import Conduit                    ()
+import Control.Monad.State.Strict (evalStateT, execStateT)
 import Data.Tree
-import Control.Monad.State.Strict (execStateT, evalStateT)
+import Text.Pandoc.Class          qualified as Pandoc
+import Text.Pandoc.Writers        qualified as Pandoc
+import Web.Twitter.Types.Lens     (User, searchResultStatuses)
 
 --------------------------------------------------------------------------------
 
-import TweetUtils.Render
-  ( renderTweets, defaultRenderConfig, RenderOutputs (..), processRenderT, imageInfoUrl
-  , imageName
-  )
-import TweetUtils.Image (fetchImage, imgBytes)
-import TweetUtils.Query
-  (buildTweetTree, parents, collectTweet, interacted, lookupMentions, lookupSearchReplies, userTL, showUser
-  , hasParent, truncated, processTw)
-import TweetUtils.MonadApp (MonadApp, Named ((:=)), logNormal, logDebug, callTwitter, config, streamTwitter)
+import TweetUtils.Image    (fetchImage, imgBytes)
+import TweetUtils.MonadApp (MonadApp, Named ((:=)), callTwitter, config, logDebug, logNormal,
+                            streamTwitter)
+import TweetUtils.Query    (buildTweetTree, collectTweet, hasParent, interacted, lookupMentions,
+                            lookupSearchReplies, parents, processTw, showUser, truncated, userTL)
+import TweetUtils.Render   (RenderOutputs (..), defaultRenderConfig, imageInfoUrl, imageName,
+                            processRenderT, renderTweets)
 
 --------------------------------------------------------------------------------
 
@@ -63,20 +52,23 @@ type DumpTweetInfo =
     , "downloadMedia" ':= Bool
     ]
 
-data FormatType = Markdown | Html | Org
-  deriving stock (Show, Read, GHC.Generic)
-  deriving anyclass (ParseFields, ParseField, ParseRecord)
+data FormatType
+  = Markdown
+  | Html
+  | Org
+  deriving stock (GHC.Generic, Read, Show)
+  deriving anyclass (ParseField, ParseFields, ParseRecord)
 
 --------------------------------------------------------------------------------
 
-apiDumpTweets :: forall m.
+apiDumpTweets ∷ forall m.
   ( MonadApp DumpTweetInfo m
-  ) =>
-  User -> m ()
+  ) ⇒
+  User → m ()
 apiDumpTweets user = do
   --logNormal "Verifying access credentials..."
   --user <- callTwitter accountVerifyCredentials
-  logNormal $ "Authenticated as user " <> (showUser user)
+  logNormal $ "Authenticated as user " <> showUser user
 
   tweets <-
     streamTwitter (userTL user)
@@ -100,7 +92,7 @@ apiDumpTweets user = do
     tweets' = tweets <> replies <> mentions
 
   logDebug "##########"
-  logDebug $ "Found " <> (T.pack $ show $ length tweets') <> " tweets"
+  logDebug $ "Found " <> T.pack (show $ length tweets') <> " tweets"
 
   let
     next = parents tweets'
@@ -119,28 +111,28 @@ apiDumpTweets user = do
 
   config @"format" >>= \case
     Markdown ->
-      (liftIO $ Pandoc.runIOorExplode $ Pandoc.writeMarkdown def doc)
+      liftIO (Pandoc.runIOorExplode $ Pandoc.writeMarkdown def doc)
         >>= writeOutputFile "./tweets.md"
     Html ->
-      (liftIO $ Pandoc.runIOorExplode $ Pandoc.writeHtml5String def doc)
+      liftIO (Pandoc.runIOorExplode $ Pandoc.writeHtml5String def doc)
         >>= writeOutputFile "./tweets.html"
     Org ->
-      (liftIO $ Pandoc.runIOorExplode $ Pandoc.writeOrg def doc)
+      liftIO (Pandoc.runIOorExplode $ Pandoc.writeOrg def doc)
         >>= writeOutputFile "./tweets.org"
 
   pure ()
 
-writeOutputFile :: (MonadApp DumpTweetInfo m) => FilePath -> T.Text -> m ()
+writeOutputFile ∷ (MonadApp DumpTweetInfo m) ⇒ FilePath → T.Text → m ()
 writeOutputFile name tx = do
   path <- config @"outDir"
   liftIO $ T.writeFile (path </> name) tx
 
-fetchImages :: (MonadApp DumpTweetInfo m) => RenderOutputs -> m ()
+fetchImages ∷ (MonadApp DumpTweetInfo m) ⇒ RenderOutputs → m ()
 fetchImages outs = for_ (imageOutputs outs) $ \img -> do
   let url = imageInfoUrl img
   dir <- config @"outDir"
   let imagesDir = dir </> "images"
-      file = imagesDir </> (T.unpack $ imageName $ imageInfoUrl img)
+      file = imagesDir </> T.unpack (imageName $ imageInfoUrl img)
   liftIO $ createDirectoryIfMissing False imagesDir
   exists <- liftIO $ doesFileExist file
   unless exists $ do

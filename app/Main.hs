@@ -1,17 +1,16 @@
 module Main where
 
-import Options.Applicative
-  (execParser, info, progDesc, fullDesc, header, helper)
 import Control.Applicative ((<**>))
+import Options.Applicative (execParser, fullDesc, header, helper, info, progDesc)
 
 --------------------------------------------------------------------------------
 
+import Cli.Parse      (parseCliOptions)
 import TweetUtils.Lib (runWithOptions)
-import Cli.Parse (parseCliOptions)
 
 --------------------------------------------------------------------------------
 
-main :: IO ()
+main ∷ IO ()
 main = do
   opts <- execParser $ info (parseCliOptions <**> helper )$
     fullDesc

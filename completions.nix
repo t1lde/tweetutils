@@ -5,7 +5,7 @@
 , name ? "${appExe}-completions.${shell}"
 , installedLocation ? "${app}/bin/${appExe}"
 }:
-runCommand name {}
+runCommand name { }
   ''
-  ${app}/bin/${appExe} --${shell}-completion-script '${installedLocation}' > $out
+    ${app}/bin/${appExe} --${shell}-completion-script '${installedLocation}' > $out
   ''
