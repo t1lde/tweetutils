@@ -1,2 +1,6 @@
-.stack-work/
-*~
+dist-newstyle
+result
+imgs/
+images/
+tweets.*
+*.txt

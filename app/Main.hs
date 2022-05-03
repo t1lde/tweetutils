@@ -1,9 +1,19 @@
 module Main where
 
-import Cli.Cli
-import Lib
+import Control.Applicative ((<**>))
+import Options.Applicative (execParser, fullDesc, header, helper, info, progDesc)
 
-main :: IO ()
+--------------------------------------------------------------------------------
+
+import Cli.Parse      (parseCliOptions)
+import TweetUtils.Lib (runWithOptions)
+
+--------------------------------------------------------------------------------
+
+main ∷ IO ()
 main = do
-  opts <- getOptions
+  opts <- execParser $ info (parseCliOptions <**> helper )$
+    fullDesc
+      <> progDesc "run twitter API commands"
+      <> header "tweetutils - cli utils with the Twitter API"
   runWithOptions opts

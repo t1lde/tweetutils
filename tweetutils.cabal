@@ -1,0 +1,118 @@
+cabal-version:      3.0
+name:               tweetutils
+version:            0.1.0.0
+synopsis:
+  Delete tweets from the commandline using the Twitter API (via twitter-conduit)
+
+description:
+  Please see the README on GitLab at <https://gitlab.com/t1lde/tweetdelete_hs#readme>
+
+category:           Web
+author:             Tilde Rose
+maintainer:         t1lde@protonmail.com
+copyright:          2022 Tilde Rose
+license:            BSD-3-Clause
+license-file:       LICENSE
+build-type:         Simple
+extra-source-files:
+  ChangeLog.md
+  README.md
+
+common lang
+  ghc-options:
+    -Wall -Werror -Wcompat -Wincomplete-record-updates
+    -Wincomplete-uni-patterns -Wredundant-constraints
+
+  default-language:   Haskell2010
+  default-extensions:
+    AllowAmbiguousTypes
+    ApplicativeDo
+    BangPatterns
+    ConstraintKinds
+    DataKinds
+    DeriveAnyClass
+    DeriveFunctor
+    DeriveGeneric
+    DeriveTraversable
+    DerivingStrategies
+    DerivingVia
+    EmptyCase
+    FlexibleContexts
+    FlexibleInstances
+    GeneralizedNewtypeDeriving
+    ImportQualifiedPost
+    InstanceSigs
+    KindSignatures
+    LambdaCase
+    MultiParamTypeClasses
+    MultiWayIf
+    NamedFieldPuns
+    OverloadedLabels
+    OverloadedStrings
+    QuantifiedConstraints
+    RecordWildCards
+    ScopedTypeVariables
+    TupleSections
+    TypeApplications
+    TypeFamilies
+    TypeOperators
+    UndecidableInstances
+    UndecidableSuperClasses
+    UnicodeSyntax
+
+common deps
+  build-depends:
+    , aeson
+    , attoparsec
+    , authenticate-oauth
+    , base                  >=4.7 && <5
+    , binary
+    , bytestring
+    , conduit
+    , conduit-extra
+    , containers
+    , data-default
+    , directory
+    , extra
+    , filepath
+    , http-types
+    , lens
+    , mtl
+    , newtype
+    , optparse-applicative
+    , optparse-generic
+    , pandoc
+    , pandoc-types
+    , parallel-io
+    , text
+    , time
+    , transformers
+    , twitter-conduit
+    , twitter-types
+    , twitter-types-lens
+
+library
+  import:          lang, deps
+  exposed-modules:
+    TweetUtils.Commands.DeleteTweets
+    TweetUtils.Commands.DumpTweets
+    TweetUtils.Commands.GetAuth
+    TweetUtils.Image
+    TweetUtils.Lib
+    TweetUtils.MonadApp
+    TweetUtils.Options
+    TweetUtils.Query
+    TweetUtils.Render
+
+  hs-source-dirs:  tweet-utils
+
+executable tweetutils-exe
+  import:         lang, deps
+  ghc-options:    -threaded -rtsopts -with-rtsopts=-N
+  build-depends:  tweetutils
+  main-is:        Main.hs
+  hs-source-dirs: app
+  other-modules:
+    Cli.Cli
+    Cli.Parse
+    Cli.ParseDuration

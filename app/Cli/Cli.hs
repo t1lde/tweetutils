@@ -1,31 +1,28 @@
-module Cli.Cli
-  ( module Options
-  , getOptions
-  ) where
+module Cli.Cli () where
 
-import Options
-import Cli.Parse
-
-import Options.Applicative
-import Control.Monad.Error.Class()
-
-import Data.Time.Clock
-import Data.Time.LocalTime
-
-getOptions :: IO (CliOptions UTCTime)
-getOptions = do
-  opts <- cliParser
-  tz <- getCurrentTimeZone
-  traverse (tryParseTime tz) opts
-
-tryParseTime :: TimeZone -> ParseTimeFmt -> IO UTCTime
-tryParseTime tz (ParseTimeFmt fmt pt) = do
-  Right(toUTC) <- pure $ pt fmt
-  return $ toUTC tz
-tryParseTime _ (ParseDuration pd) = do
-  time <- getZonedTime
-  return $ pd time
-
-cliParser :: IO (CliOptions ParseTimeFmt)
-cliParser = customExecParser (prefs showHelpOnEmpty) $ info (parseCliOptions <**> helper) $
-  fullDesc <> (header "tweetdeletecli - automatically delete old tweets")
+--import Options
+--Import Cli.Parse
+--
+--Import Options.Applicative
+--Import Control.Monad.Error.Class()
+--
+--Import Data.Time.Clock
+--Import Data.Time.LocalTime
+--
+--GetOptions :: IO (CliOptions UTCTime)
+--GetOptions = do
+--  opts <- cliParser
+--  tz <- getCurrentTimeZone
+--  traverse (tryParseTime tz) opts
+--
+--TryParseTime :: TimeZone -> ParseTimeFmt -> IO UTCTime
+--TryParseTime tz (ParseTimeFmt fmt pt) = do
+--  Right(toUTC) <- pure $ pt fmt
+--  return $ toUTC tz
+--TryParseTime _ (ParseDuration pd) = do
+--  time <- getZonedTime
+--  return $ pd time
+--
+--CliParser :: IO (CliOptions ParseTimeFmt)
+--CliParser = customExecParser (prefs showHelpOnEmpty) $ info (parseCliOptions <**> helper) $
+--  fullDesc <> (header "tweetdeletecli - automatically delete old tweets")
