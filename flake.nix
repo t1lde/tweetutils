@@ -6,6 +6,9 @@
 
   outputs = inputs@{ self, nixpkgs, haskell-nix, ... }:
     let
+      project = "tweetutils";
+      projectApp = "tweetutils-exe";
+
       supportedSystems = with nixpkgs.lib.systems.supported; tier1 ++ tier2 ++ tier3;
 
       perSystem = nixpkgs.lib.genAttrs supportedSystems;
@@ -16,6 +19,19 @@
       ghcVersion = "ghc8107";
 
       tools = {};
+
+      completionsFor = system: nixpkgs.lib.genAttrs ["fish" "bash" "zsh"] (shell:
+        let
+          pkgs = nixpkgsFor' system;
+        in
+          pkgs.callPackage ./completions.nix {
+            inherit shell;
+            name = "completions.${shell}";
+            appExe = projectApp;
+            app = self.flake.${system}.packages."${project}:exe:${projectApp}";
+          }
+
+      );
 
       projectFor = system:
         let pkgs = nixpkgsFor system; in
@@ -50,8 +66,8 @@
     {
       project = perSystem projectFor;
       flake = perSystem (system: (projectFor system).flake { });
-
-      packages = perSystem (system: self.flake.${system}.packages);
+      packages = perSystem (system: self.flake.${system}.packages // { completions = completionsFor system; });
       devShell = perSystem (system: self.flake.${system}.devShell);
+      defaultApp = perSystem (system: self.flake.${system}.packages."${project}:exe:${projectApp}");
     };
 }

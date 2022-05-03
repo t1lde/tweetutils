@@ -1,79 +1,133 @@
-module TweetUtils.Options where
+module TweetUtils.Options
+  ( ApiKey (..)
+  , ApiKeyType (..)
+  , ApiKeyVis (..)
+  , AppOptions (..)
+  , AppMode (..)
+  , DumpTweetOpts (..)
+  , mkInfo
+  , LogLevel (..)
+  , FormatType (..)
+  ) where
 
-import Data.Traversable()
+--------------------------------------------------------------------------------
 
-import Data.Time.Clock
-import Data.Time.LocalTime
+import Control.Applicative (Alternative (..), liftA2)
+import GHC.Generics qualified as GHC
+import Control.Monad.IO.Class (MonadIO (..))
+import System.Environment (lookupEnv)
 
-import Data.ByteString
+--------------------------------------------------------------------------------
+
+import Data.ByteString hiding (empty)
+import Data.ByteString qualified as B
+import Options.Generic
+  ( ParseRecord (..)
+  , ParseField (..)
+  , ParseFields (..)
+  , getOnly
+  --, parseRecordWithModifiers
+  --, lispCaseModifiers
+  )
+import Options.Applicative (hsubparser, command, info, progDesc)
+
+--------------------------------------------------------------------------------
 
 import Web.Twitter.Conduit
+
+--------------------------------------------------------------------------------
+
+import TweetUtils.Commands.DumpTweets (FormatType (..))
+import TweetUtils.MonadApp (LogLevel (..))
+
+--------------------------------------------------------------------------------
 
 data ApiKeyType = Consumer | Access
 data ApiKeyVis  = Public   | Private
 
-newtype ApiKey (ty :: ApiKeyType) (v :: ApiKeyVis) = ApiKey ByteString deriving Show via ByteString
+data ApiKey (ty :: ApiKeyType) (v :: ApiKeyVis)
+  = ApiKey ByteString
+  | ApiKeyFile FilePath
+  | ApiKeyEnv
+  deriving stock (GHC.Generic)
+  deriving anyclass (ParseFields, ParseRecord)
 
-type ParseTime = String -> Either String (TimeZone -> UTCTime)
-type ParseDuration = (ZonedTime -> UTCTime)
+instance ParseField (ApiKey ty v) where
+  parseField _ label short d =
+    (ApiKey <$> parseField @ByteString Nothing label short d)
+      <|> (ApiKeyFile <$> parseField @FilePath Nothing fileLabel Nothing Nothing)
+      <|> (pure ApiKeyEnv)
+    where
+      fileLabel = fmap (<> "-file") label
 
-data ParseTimeFmt
-  = ParseTimeFmt     {parseTimeFmt :: String, runParseTime :: ParseTime }
-  | ParseDuration    ParseDuration
+  readField = undefined
 
-instance Show ParseTimeFmt where
-  show _ = "ParseTime ..."
+  metavar _ = "key"
 
-data CliOptions time = CliOptions
-  { cliConsumerPrivate :: ApiKey 'Consumer 'Private
-  , cliConsumerPublic  :: ApiKey 'Consumer 'Public
-  , cliModeOptions     :: (CliModeOptions time)
+
+
+data AppOptions = AppOptions
+  { consumerPrivate ::  Maybe (ApiKey 'Consumer 'Private)
+  , consumerPublic  :: Maybe (ApiKey 'Consumer 'Public)
+  , logLevel :: LogLevel
+  , mode     :: AppMode
   }
-  deriving (Show, Functor, Foldable, Traversable)
+  deriving stock (GHC.Generic)
+  deriving anyclass ParseRecord
 
-data CliModeOptions time
-  = CliAuthMode
-  | CliDeleteMode (CliDeleteOptions time)
-  deriving (Show, Functor, Foldable, Traversable)
+data AppMode
+  = Auth
+  | DumpTweets DumpTweetOpts
+  deriving stock GHC.Generic
 
-data CliDeleteOptions time = CliDeleteOptions
-  { cliAccessPrivate :: ApiKey 'Access 'Private
-  , cliAccessPublic  :: ApiKey 'Access 'Public
-  , cliDeleteMode    :: (CliDeleteSelection time)
-  , cliPromptMode    :: CliPromptMode
-  , cliDeleteLikes   :: CliDeleteLikes
+instance ParseRecord AppMode where
+  parseRecord = fmap getOnly parseRecord
+
+instance ParseFields AppMode where
+  parseFields _ _ _ _ =
+    hsubparser
+      ( command "auth" (info (pure Auth) $ progDesc "get OAuth Keys")
+      <> command "dump-tweets" (info parseRecord $ progDesc "dump tweets")
+      )
+
+
+data DumpTweetOpts = DumpTweetOpts
+  { accessPrivate :: Maybe (ApiKey 'Access 'Private)
+  , accessPublic  :: Maybe (ApiKey 'Access 'Public)
+  , outDir           :: FilePath
+  , format           :: FormatType
+  , downloadMedia    :: Bool
   }
-  deriving (Show, Functor, Foldable, Traversable)
+  deriving stock (GHC.Generic)
+  deriving anyclass (ParseRecord)
 
-data CliDeleteSelection time
-  = DeleteAllMode
-  | FromDateMode String time
-  | BeforeDurationMode String time
-  deriving (Functor, Foldable, Traversable)
 
-instance (Show a) => Show (CliDeleteSelection a) where
-  show DeleteAllMode = "DeleteAllMode"
-  show (FromDateMode _ time)  = "FromDateMode " <> show time
-  show (BeforeDurationMode _ time) = "BeforeDurationMode " <> show time
+apiKeyBytes :: (MonadIO m) => String -> Maybe (ApiKey ty vis) -> m (Either String ByteString)
+apiKeyBytes _ (Just (ApiKey b)) = pure $ pure b
+apiKeyBytes _ (Just (ApiKeyFile path)) = fmap pure $ liftIO $ B.readFile path
+apiKeyBytes var _ = liftIO $ (lookupEnv var >>= (traverse B.readFile . maybe (Left var) pure))
 
-data CliPromptMode
-  = CliConfirm
-  | CliForce
-  | CliDryRun
-  deriving (Show, Eq)
+mkOauth :: ByteString -> ByteString -> OAuth
+mkOauth priv pub = twitterOAuth {oauthConsumerKey = pub, oauthConsumerSecret = priv}
 
-data CliDeleteLikes
-  = CliDeleteLikes
-  | CliNoDeleteLikes
-  deriving (Show, Eq)
+mkAccess :: ByteString -> ByteString -> Credential
+mkAccess priv pub = Credential [("oauth_token", pub), ("oauth_token_secret", priv)]
 
-mkOauth :: ApiKey 'Consumer 'Private -> ApiKey 'Consumer 'Public -> OAuth
-mkOauth (ApiKey priv) (ApiKey pub) = twitterOAuth {oauthConsumerKey = pub, oauthConsumerSecret = priv}
+authInfo :: TWInfo -> OAuth -> TWInfo
+authInfo inf auth = setCredential auth (Credential []) inf
 
-mkAccess :: ApiKey 'Access 'Private -> ApiKey 'Access 'Public -> Credential
-mkAccess (ApiKey priv) (ApiKey pub) = Credential [("oauth_token", pub), ("oauth_token_secret", priv)]
+accessInfo :: TWInfo -> OAuth -> Credential -> TWInfo
+accessInfo inf auth access = setCredential auth access inf
 
-mkInfo :: CliOptions a -> TWInfo -> TWInfo
-mkInfo (CliOptions priv pub CliAuthMode) = setCredential (mkOauth priv pub) (Credential [])
-mkInfo (CliOptions priv pub (CliDeleteMode (CliDeleteOptions a_priv a_pub _ _ _))) =
-  setCredential (mkOauth priv pub) (mkAccess a_priv a_pub)
+
+mkInfo :: (MonadIO m) => AppOptions -> TWInfo ->  m (Either String TWInfo)
+mkInfo (AppOptions priv pub _ mode) inf = do
+  priv' <- apiKeyBytes "CONSUMER_PRIVATE" priv
+  pub' <- apiKeyBytes "CONSUMER_PUBLIC" pub
+  auth <- pure $ liftA2 mkOauth priv' pub'
+  case mode of
+    Auth -> pure $ fmap (authInfo inf) auth
+    (DumpTweets (DumpTweetOpts {accessPrivate = aPriv, accessPublic = aPub})) -> do
+      aPriv' <- apiKeyBytes "ACCESS_PRIVATE" aPriv
+      aPub' <- apiKeyBytes "ACCESS_PUBLIC" aPub
+      pure $ liftA2 (accessInfo inf) auth (liftA2 mkAccess aPriv' aPub')

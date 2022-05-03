@@ -1,4 +1,4 @@
-cabal-version: 3.6
+cabal-version:  3.0
 name:           tweetutils
 version:        0.1.0.0
 synopsis:       Delete tweets from the commandline using the Twitter API (via twitter-conduit)
@@ -49,6 +49,8 @@ common lang
     ImportQualifiedPost
     AllowAmbiguousTypes
     UndecidableSuperClasses
+    QuantifiedConstraints
+    DeriveAnyClass
 
 common deps
   build-depends:
@@ -77,6 +79,11 @@ common deps
     , data-default
     , directory
     , filepath
+    , extra
+    , data-default
+    , newtype
+    , optparse-generic
+
 
 library
   import: lang, deps
@@ -88,6 +95,7 @@ library
     TweetUtils.Image
     TweetUtils.Options
     TweetUtils.Query
+    TweetUtils.Lib
     TweetUtils.Render
   hs-source-dirs:
       tweet-utils

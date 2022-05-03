@@ -27,7 +27,8 @@ import Control.Applicative
 --------------------------------------------------------------------------------
 
 import Control.Lens hiding (children)
-import Control.Monad.State.Class
+import Control.Monad.State.Strict (StateT, modify, gets, put, get)
+import Control.Monad.Trans (lift)
 import qualified Data.Map as M
 import qualified Data.Set as S
 import Data.Text hiding (length, minimum, null, filter)
@@ -39,7 +40,7 @@ import Web.Twitter.Types.Lens hiding (user)
 
 --------------------------------------------------------------------------------
 
-import TweetUtils.MonadApp (MonadApp, logDebug, callTwitter)
+import TweetUtils.MonadApp (MonadAppBase, logDebug, callTwitter)
 
 --------------------------------------------------------------------------------
 
@@ -57,19 +58,18 @@ userTL user =
     & #tweet_mode ?~ Extended
 
 processTw :: 
-  ( MonadApp '[] m
-  , MonadState (S.Set StatusId, M.Map StatusId Status) m
-  ) => 
-  m ()
+  ( MonadAppBase m
+  ) =>
+  StateT (S.Set StatusId, M.Map StatusId Status) m ()
 processTw = do
   (next, all_tweets) <- get
 
-  logDebug $
+  lift $ logDebug $
     "Searching for " <> (pack $ show $ length next)
       <> " parents from " <> (pack $ show $ length all_tweets) <> " total tweets"
 
   tweets <-
-    (callTwitter $ lookupTweets $ next <> truncated all_tweets)
+    (lift $ callTwitter $ lookupTweets $ next <> truncated all_tweets)
       & fmap (foldMap collectTweet)
 
   let
@@ -85,8 +85,8 @@ processTw = do
 truncated :: M.Map StatusId Status -> S.Set StatusId
 truncated xs = foldMap ((^. statusId) >>> S.singleton) $ M.filter (\s -> s ^. statusTruncated) xs
 
-buildTweetTree :: 
-  (MonadState (M.Map StatusId Status) m) => Status -> m (Status, [Status])
+buildTweetTree :: (Monad m) =>
+  Status -> StateT (M.Map StatusId Status) m (Status, [Status])
 buildTweetTree tw = do
   children <- gets $ M.filter $ childOf tw
   modify (M.\\ children)

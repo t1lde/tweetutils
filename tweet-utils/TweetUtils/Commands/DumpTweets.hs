@@ -1,37 +1,47 @@
 module TweetUtils.Commands.DumpTweets
   ( apiDumpTweets
-  , DumpTweetOptions (..)
+  , type DumpTweetInfo
+  , FormatType (..)
   ) where
 
 --------------------------------------------------------------------------------
 
-import Data.Maybe (fromMaybe, isJust)
 import Control.Arrow
 import Control.Monad
-import Control.Applicative
 import Data.Foldable (for_)
+import Control.Monad.IO.Class (liftIO)
+import GHC.Generics qualified as GHC
 
 --------------------------------------------------------------------------------
 
 import System.Directory (doesFileExist, createDirectoryIfMissing)
-import System.FilePath.Posix ((</>), FilePath)
+import System.FilePath.Posix ((</>))
 import Data.ByteString.Lazy qualified as LBS
 import Control.Lens hiding (children)
-import Control.Monad.State.Class
 import qualified Data.Map as M
-import qualified Data.Set as S
 import Data.Text qualified as T
 import qualified Data.Text.IO as T
+import Control.Monad.Extra (whenM)
+import Data.Default (Default (def))
+import Options.Generic
+  ( ParseRecord (..)
+  , ParseField (..)
+  , ParseFields (..)
+  --, parseRecordWithModifiers
+  --, lispCaseModifiers
+  --, parseField
+  )
 
 --------------------------------------------------------------------------------
 
-import Conduit
-import Web.Twitter.Conduit
-import Web.Twitter.Types.Lens hiding (user)
+import Conduit ()
+import Web.Twitter.Types.Lens
+  (searchResultStatuses, User
+  )
 import Text.Pandoc.Writers qualified as Pandoc
 import Text.Pandoc.Class qualified as Pandoc
 import Data.Tree
-import Control.Monad.State.Lazy (execStateT, evalStateT)
+import Control.Monad.State.Strict (execStateT, evalStateT)
 
 --------------------------------------------------------------------------------
 
@@ -41,8 +51,9 @@ import TweetUtils.Render
   )
 import TweetUtils.Image (fetchImage, imgBytes)
 import TweetUtils.Query
-  (buildTweetTree, parents, collectTweet, interacted, lookupMentions, lookupSearchReplies, userTL, showUser)
-import TweetUtils.MonadApp (MonadApp, Named ((:=)), logNormal, logDebug, callTwitter, config)
+  (buildTweetTree, parents, collectTweet, interacted, lookupMentions, lookupSearchReplies, userTL, showUser
+  , hasParent, truncated, processTw)
+import TweetUtils.MonadApp (MonadApp, Named ((:=)), logNormal, logDebug, callTwitter, config, streamTwitter)
 
 --------------------------------------------------------------------------------
 
@@ -53,17 +64,19 @@ type DumpTweetInfo =
     ]
 
 data FormatType = Markdown | Html | Org
-  deriving stock Show
+  deriving stock (Show, Read, GHC.Generic)
+  deriving anyclass (ParseFields, ParseField, ParseRecord)
 
 --------------------------------------------------------------------------------
 
-apiDumpTweets ::
-  ( MonadApp DumpTweetInfo m) =>
-  m ()
-apiDumpTweets = do
-  logNormal "Verifying access credentials..."
-  user <- callTwitter accountVerifyCredentials
-  putLog "Authenticated as user " <> (showUser user)
+apiDumpTweets :: forall m.
+  ( MonadApp DumpTweetInfo m
+  ) =>
+  User -> m ()
+apiDumpTweets user = do
+  --logNormal "Verifying access credentials..."
+  --user <- callTwitter accountVerifyCredentials
+  logNormal $ "Authenticated as user " <> (showUser user)
 
   tweets <-
     streamTwitter (userTL user)
@@ -73,21 +86,21 @@ apiDumpTweets = do
     minId = maybe 0 fst $ M.lookupMin tweets
 
   replies <-
-    callTwitter (lookupSearchReplies user minId) & fmap $
-      (^. searchResultStatuses)
+    callTwitter (lookupSearchReplies user minId)
+      <&>
+      ((^. searchResultStatuses)
         >>> filter interacted
-        >>> foldMap collectTweet
+        >>> foldMap collectTweet)
 
   mentions <-
-    streamTwitter (lookupMentions minId) & fmap $
-      (filter interacted)
-        >>> foldMap collectTweet
+    streamTwitter (lookupMentions minId)
+      <&> (filter interacted >>> foldMap collectTweet)
 
   let
     tweets' = tweets <> replies <> mentions
 
   logDebug "##########"
-  logDebug $ "Found " <> (pack $ show $ length tweets') <> " tweets"
+  logDebug $ "Found " <> (T.pack $ show $ length tweets') <> " tweets"
 
   let
     next = parents tweets'
@@ -102,33 +115,33 @@ apiDumpTweets = do
 
   cfg <- liftIO defaultRenderConfig
 
-  doc <- processRenderT (renderTweets tweetTree) cfg $ whenM (config @"downloadMedia") fetchImages
+  doc <- processRenderT (renderTweets tweetTree) cfg $ whenM (config @"downloadMedia") . fetchImages
 
   config @"format" >>= \case
     Markdown ->
-      liftIO $ Pandoc.runIOorExplode $ Pandoc.writeMarkdown def doc
+      (liftIO $ Pandoc.runIOorExplode $ Pandoc.writeMarkdown def doc)
         >>= writeOutputFile "./tweets.md"
     Html ->
-      liftIO $ Pandoc.runIOorExplode $ Pandoc.writeHtml5String def doc
+      (liftIO $ Pandoc.runIOorExplode $ Pandoc.writeHtml5String def doc)
         >>= writeOutputFile "./tweets.html"
     Org ->
-      liftIO $ Pandoc.runIOorExplode $ Pandoc.writeOrg def doc
+      (liftIO $ Pandoc.runIOorExplode $ Pandoc.writeOrg def doc)
         >>= writeOutputFile "./tweets.org"
 
   pure ()
 
-writeOutputFile :: FilePath -> T.Text -> m ()
+writeOutputFile :: (MonadApp DumpTweetInfo m) => FilePath -> T.Text -> m ()
 writeOutputFile name tx = do
   path <- config @"outDir"
   liftIO $ T.writeFile (path </> name) tx
 
-fetchImages :: (MonadApp '[] m) => RenderOutputs -> m ()
+fetchImages :: (MonadApp DumpTweetInfo m) => RenderOutputs -> m ()
 fetchImages outs = for_ (imageOutputs outs) $ \img -> do
   let url = imageInfoUrl img
   dir <- config @"outDir"
   let imagesDir = dir </> "images"
-      file = T.unpack $ imageName $ imageInfoUrl img
-  liftIO $ createDirectoryIfMissing False (dir </> "images")
+      file = imagesDir </> (T.unpack $ imageName $ imageInfoUrl img)
+  liftIO $ createDirectoryIfMissing False imagesDir
   exists <- liftIO $ doesFileExist file
   unless exists $ do
     logNormal ("Fetching image at" <> url)

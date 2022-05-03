@@ -1,33 +1,53 @@
-# tweetdelete_hs
+# tweetutils
 
-Haskell version of [tweet delete cli](https://gitlab.com/t1lde/tweet_delete_cli).
-Delete tweets from the commandline, using the twitter API (requires a twitter API account).
 
-# Mirror Note:
+## Obtaining API Consumer Keys
 
-I primarily use Gitlab for actual development use - this repository is a mirror of the main https://gitlab.com/t1lde/tweetdelete_hs repository.
+The application requires Twitter API consumer keys.  These are **not safe** to share, since the Consumer key acts as an Access key for the owner's account.
+
+Follow the instructions [here](https://developer.twitter.com/en/docs/authentication/oauth-1-0a/api-key-and-secret) on how to obtain API Consumer keys. 
+
+Keep them somewhere as safe as your Twitter password!
+
+## Building with Nix Flakes
+
+The simplest method is with [nix](https://nixos.org/) 
+
+- Install an up-to-date version of nix, with flakes enabled
+- *optional*: use [haskell.nix binary cache](https://input-output-hk.github.io/haskell.nix/tutorials/getting-started.html#setting-up-the-binary-cache)
+- `nix build .#tweetutils:exe:tweetutils-exe` will build the executable locally, in the `result` directory
 
 ## Usage:
 
 All commands require a twitter API consumer keypair, set with the --consumer_private and --consumer_public flags.
 
 ```
-tweetdeletecli - automatically delete old tweets
+tweetutils - cli utils with the Twitter API
 
-Usage: tweetdelete-exe --consumer_private CONSUMER_PRIVATE
-                       --consumer_public CONSUMER_PUBLIC COMMAND
+Usage: tweetutils-exe [--consumer_private CONSUMER_PRIVATE |
+                        --consumer_private_file path]
+                      [--consumer_public CONSUMER_PUBLIC |
+                        --consumer_public_file path]
+                      [(-q|--quiet) | (-v|--verbose)] COMMAND
+
+  run twitter API commands
 
 Available options:
   --consumer_private CONSUMER_PRIVATE
                            API Consumer Private Key
+  --consumer_private_file path
+                           API Consumer Private Key (file)
   --consumer_public CONSUMER_PUBLIC
                            API Consumer Public Key
+  --consumer_public_file path
+                           API Consumer Public Key (file)
+  -q,--quiet               don't print log messages
+  -v,--verbose             print more log messages
   -h,--help                Show this help text
 
 Available commands:
   auth                     Acquire access keypair via oauth pin.
-  delete                   Delete tweets
-
+  dump-tweets              Dump tweets & interactions to file
 ```
 
 ### Acquiring Access Keys - auth command
@@ -42,7 +62,39 @@ Available options:
   -h,--help                Show this help text
 ```
 
-### Deleting Tweets - delete command
+### Dumping Threads - dump-tweets command
+
+The dump-tweets command queries for threads from the authorised user and renders them to an output file.
+
+```
+Usage: tweetutils-exe dump-tweets [--access_private ACCESS_PRIVATE |
+                                    --access_private_file path]
+                                  [--access_public ACCESS_PUBLIC |
+                                    --access_public_file path] --out_dir path
+                                  --format <markdown | html | org>
+                                  [--download_media | --no_download_media]
+
+  Dump tweets & interactions to file
+
+Available options:
+  --access_private ACCESS_PRIVATE
+                           Account Access Private Key
+  --access_private_file path
+                           Account Access Private Key (file)
+  --access_public ACCESS_PUBLIC
+                           Account Access Public Key
+  --access_public_file path
+                           Account Access Public Key (file)
+  --out_dir path           output directory
+  --format <markdown | html | org>
+                           output file render format
+  --download_media         download embedded media files
+  --no_download_media      don't download embedded media files
+  -h,--help                Show this help text
+
+```
+
+### Deleting Tweets - delete command (currently disabled)
 
 The delete command deletes your tweets based on a query. A Twitter API access keypair is required for this command, set with the --access_private and --access_public flags.
 
