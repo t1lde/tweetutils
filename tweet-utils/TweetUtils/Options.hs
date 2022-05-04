@@ -20,6 +20,7 @@ import System.Environment     (lookupEnv)
 --------------------------------------------------------------------------------
 
 import Data.ByteString     hiding (empty)
+import Data.Text           qualified as T
 import Data.Text.Encoding  qualified as T
 import Data.Text.IO        qualified as T
 import Options.Applicative (command, hsubparser, info, progDesc)
@@ -47,7 +48,7 @@ data ApiKey (ty :: ApiKeyType) (v :: ApiKeyVis)
   = ApiKey ByteString
   | ApiKeyFile FilePath
   | ApiKeyEnv
-  deriving stock (GHC.Generic)
+  deriving stock (GHC.Generic, Show)
   deriving anyclass (ParseFields, ParseRecord)
 
 instance ParseField (ApiKey ty v) where
@@ -71,13 +72,13 @@ data AppOptions
       , logLevel        :: LogLevel
       , mode            :: AppMode
       }
-  deriving stock (GHC.Generic)
+  deriving stock (GHC.Generic, Show)
   deriving anyclass (ParseRecord)
 
 data AppMode
   = Auth
   | DumpTweets DumpTweetOpts
-  deriving stock (GHC.Generic)
+  deriving stock (GHC.Generic, Show)
 
 instance ParseRecord AppMode where
   parseRecord = fmap getOnly parseRecord
@@ -98,7 +99,7 @@ data DumpTweetOpts
       , format        :: FormatType
       , downloadMedia :: Bool
       }
-  deriving stock (GHC.Generic)
+  deriving stock (GHC.Generic, Show)
   deriving anyclass (ParseRecord)
 
 
@@ -108,10 +109,10 @@ apiKeyBytes _ (Just (ApiKeyFile path)) = fmap pure $ liftIO $ readKeyFile path
 apiKeyBytes var _ = liftIO (lookupEnv var >>= (traverse readKeyFile . maybe (Left var) pure))
 
 readKeyFile ∷ FilePath → IO ByteString
-readKeyFile = fmap T.encodeUtf8 . T.readFile
+readKeyFile = fmap (T.encodeUtf8 . T.strip). T.readFile
 
 mkOauth ∷ ByteString → ByteString → OAuth
-mkOauth priv pub = twitterOAuth {oauthConsumerKey = pub, oauthConsumerSecret = priv}
+mkOauth priv pub = twitterOAuth {oauthConsumerKey = pub, oauthConsumerSecret = priv, oauthCallback = Just "oob"}
 
 mkAccess ∷ ByteString → ByteString → Credential
 mkAccess priv pub = Credential [("oauth_token", pub), ("oauth_token_secret", priv)]

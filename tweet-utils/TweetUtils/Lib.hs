@@ -9,7 +9,7 @@ import System.Exit   (die)
 
 --------------------------------------------------------------------------------
 
-import Control.Monad.Reader (ReaderT (..), asks)
+import Control.Monad.Reader (ReaderT (..), asks, when)
 
 --------------------------------------------------------------------------------
 
@@ -25,11 +25,17 @@ import TweetUtils.Options             (AppMode (..), AppOptions (..), DumpTweetO
 --------------------------------------------------------------------------------
 
 runWithOptions ∷ AppOptions → IO ()
-runWithOptions opts = do
+runWithOptions opts@(AppOptions {logLevel = lvl}) = do
+  when (lvl >= Debug) $ do
+    putStrLn $ show opts
+
   apiManager <- newManager tlsManagerSettings
   inf <-
     mkInfo opts proxySettings
       >>= either handleErr pure
+
+  when (lvl >= Debug) $  do
+    putStrLn $ show inf
 
   appMode inf apiManager opts
   return ()

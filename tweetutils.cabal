@@ -18,6 +18,11 @@ extra-source-files:
   ChangeLog.md
   README.md
 
+flag release
+  description: enable release options
+  default:     False
+  manual:      True
+
 common lang
   ghc-options:
     -Wall -Werror -Wcompat -Wincomplete-record-updates
@@ -93,6 +98,10 @@ common deps
 
 library
   import:          lang, deps
+
+  if flag(release)
+
+  ghc-options:     -O2
   exposed-modules:
     TweetUtils.Commands.DeleteTweets
     TweetUtils.Commands.DumpTweets
@@ -109,6 +118,10 @@ library
 executable tweetutils-exe
   import:         lang, deps
   ghc-options:    -threaded -rtsopts -with-rtsopts=-N
+
+  if flag(release)
+
+  ghc-options:    -O2
   build-depends:  tweetutils
   main-is:        Main.hs
   hs-source-dirs: app

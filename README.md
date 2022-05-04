@@ -15,7 +15,7 @@ The simplest method is with [nix](https://nixos.org/)
 
 - Install an up-to-date version of nix, with flakes enabled
 - *optional*: use [haskell.nix binary cache](https://input-output-hk.github.io/haskell.nix/tutorials/getting-started.html#setting-up-the-binary-cache)
-- `nix build .#tweetutils:exe:tweetutils-exe` will build the executable locally, in the `result` directory
+- `nix build` will build the executable locally, in the `result/bin` directory
 
 ## Usage:
 

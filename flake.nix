@@ -36,6 +36,7 @@
         let pkgs' = nixpkgsFor' system; in
         (nixpkgsFor system).haskell-nix.cabalProject' {
           src = ./.;
+          configureArgs = "-f release";
           compiler-nix-name = ghcVersion;
           shell = {
             withHoogle = true;
@@ -51,14 +52,17 @@
           };
         };
 
+      app = perSystem (system: self.flake.${system}.packages."${project}:exe:${projectApp}");
+
     in
     {
+
       project = perSystem projectFor;
       flake = perSystem (system: (projectFor system).flake { });
       packages = perSystem (system: self.flake.${system}.packages // { completions = completionsFor system; });
       devShell = perSystem (system: self.flake.${system}.devShell);
-      defaultApp = perSystem (system: self.flake.${system}.packages."${project}:exe:${projectApp}");
-      defaultPackage = perSystem (system: self.flake.${system}.packages."${project}:exe:${projectApp}");
+      defaultApp = app;
+      defaultPackage = app;
       formatter = perSystem (system: nixpkgs.legacyPackages.${system}.nixpkgs-fmt);
     };
 }

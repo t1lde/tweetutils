@@ -136,6 +136,6 @@ fetchImages outs = for_ (imageOutputs outs) $ \img -> do
   liftIO $ createDirectoryIfMissing False imagesDir
   exists <- liftIO $ doesFileExist file
   unless exists $ do
-    logNormal ("Fetching image at" <> url)
+    logNormal ("Fetching image at " <> url)
     callTwitter (fetchImage img)
       >>= liftIO . LBS.writeFile file . imgBytes
